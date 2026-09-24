@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { Button, Form, Input, message } from "antd";
+import { useAuth } from "../../context/AuthContext";
 
 type RegisterValues = {
   username: string;
@@ -12,7 +14,13 @@ export function RegisterPage() {
   const [form] = Form.useForm<RegisterValues>();
   const [loading, setLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
+  const { token } = useAuth();
+  const navigate = useNavigate();
   const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+
+  if (token) {
+    return <Navigate to="/" replace />;
+  }
 
   async function handleRegister(values: RegisterValues) {
     setLoading(true);
@@ -35,6 +43,7 @@ export function RegisterPage() {
 
       form.resetFields();
       messageApi.success("Registration successful");
+      navigate("/login", { replace: true });
     } catch (error) {
       messageApi.error(error instanceof Error ? error.message : "Registration failed");
     } finally {
@@ -100,6 +109,9 @@ export function RegisterPage() {
             Register
           </Button>
         </Form>
+        <p>
+          <Link to="/login">Login</Link>
+        </p>
       </section>
     </main>
   );

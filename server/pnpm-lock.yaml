@@ -20,6 +20,9 @@ importers:
       express:
         specifier: ^5.2.1
         version: 5.2.1(supports-color@5.5.0)
+      jsonwebtoken:
+        specifier: ^9.0.3
+        version: 9.0.3
       mssql:
         specifier: ^12.7.2
         version: 12.7.2(supports-color@5.5.0)

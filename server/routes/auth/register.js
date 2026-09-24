@@ -21,7 +21,7 @@ router.post('/', async (req, res) => {
         const existingUser = await pool.request()
             .input('username', sql.NVarChar(50), username.trim())
             .input('email', sql.NVarChar(100), email.trim())
-            .query('SELECT id FROM users WHERE username = @username OR email = @email')
+            .query('SELECT id FROM dbo.[users] WHERE username = @username OR email = @email')
 
         if (existingUser.recordset.length > 0) {
             return res.status(409).json({ message: 'Username or email already exists' })
@@ -33,7 +33,7 @@ router.post('/', async (req, res) => {
             .input('email', sql.NVarChar(100), email.trim())
             .input('passwordHash', sql.NVarChar(255), hashedPassword)
             .query(`
-                INSERT INTO users (username, email, password_hash)
+                INSERT INTO dbo.[users] (username, email, password_hash)
                 OUTPUT INSERTED.id
                 VALUES (@username, @email, @passwordHash)
             `)
