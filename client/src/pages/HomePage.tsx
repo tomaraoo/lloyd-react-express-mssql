@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, Form, Input, Modal, Table, message } from "antd";
+import { Button, Form, Input, Modal, Select, Table, message } from "antd";
 import type { TableProps } from "antd";
 import { useAuth } from "../context/AuthContext";
 
@@ -19,7 +19,11 @@ type CreateTaskValues = {
   due_date: string;
 };
 
-const columns: TableProps<Task>["columns"] = [
+type UpdateTaskValues = CreateTaskValues & {
+  status: "Pending" | "Completed";
+};
+
+const taskColumns: NonNullable<TableProps<Task>["columns"]> = [
   {
     title: "Title",
     dataIndex: "title",
@@ -45,7 +49,10 @@ export function HomePage() {
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
-  const [form] = Form.useForm<CreateTaskValues>();
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [createForm] = Form.useForm<CreateTaskValues>();
+  const [updateForm] = Form.useForm<UpdateTaskValues>();
   const [messageApi, contextHolder] = message.useMessage();
   const { token, username, logout } = useAuth();
   const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
@@ -98,7 +105,7 @@ export function HomePage() {
       }
 
       setTasks((current) => [result, ...current]);
-      form.resetFields();
+      createForm.resetFields();
       setCreateOpen(false);
       messageApi.success("Task created");
     } catch (error) {
@@ -107,6 +114,55 @@ export function HomePage() {
       setCreateLoading(false);
     }
   }
+
+  function openUpdate(task: Task) {
+    setEditingTask(task);
+    updateForm.setFieldsValue({
+      title: task.title,
+      description: task.description || undefined,
+      due_date: task.due_date.slice(0, 10),
+      status: task.status,
+    });
+  }
+
+  async function updateTask(values: UpdateTaskValues) {
+    if (!editingTask) return;
+
+    setUpdateLoading(true);
+
+    try {
+      const response = await fetch(`${apiUrl}/tasks/${editingTask.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(values),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to update task");
+      }
+
+      setTasks((current) => current.map((task) => (task.id === result.id ? result : task)));
+      setEditingTask(null);
+      messageApi.success("Task updated");
+    } catch (error) {
+      messageApi.error(error instanceof Error ? error.message : "Failed to update task");
+    } finally {
+      setUpdateLoading(false);
+    }
+  }
+
+  const columns: TableProps<Task>["columns"] = [
+    ...taskColumns,
+    {
+      title: "Actions",
+      key: "actions",
+      render: (_, task) => <Button onClick={() => openUpdate(task)}>Edit</Button>,
+    },
+  ];
 
   return (
     <main className="home-page">
@@ -137,7 +193,7 @@ export function HomePage() {
         onCancel={() => setCreateOpen(false)}
         footer={null}
       >
-        <Form form={form} layout="vertical" onFinish={createTask}>
+        <Form form={createForm} layout="vertical" onFinish={createTask}>
           <Form.Item
             label="Title"
             name="title"
@@ -156,6 +212,47 @@ export function HomePage() {
             <Input type="date" />
           </Form.Item>
           <Button type="primary" htmlType="submit" loading={createLoading}>
+            Save
+          </Button>
+        </Form>
+      </Modal>
+      <Modal
+        title="Edit task"
+        open={editingTask !== null}
+        onCancel={() => setEditingTask(null)}
+        footer={null}
+      >
+        <Form form={updateForm} layout="vertical" onFinish={updateTask}>
+          <Form.Item
+            label="Title"
+            name="title"
+            rules={[{ required: true, message: "Title is required" }]}
+          >
+            <Input maxLength={100} />
+          </Form.Item>
+          <Form.Item label="Description" name="description">
+            <Input.TextArea rows={4} maxLength={500} />
+          </Form.Item>
+          <Form.Item
+            label="Due date"
+            name="due_date"
+            rules={[{ required: true, message: "Due date is required" }]}
+          >
+            <Input type="date" />
+          </Form.Item>
+          <Form.Item
+            label="Status"
+            name="status"
+            rules={[{ required: true, message: "Status is required" }]}
+          >
+            <Select
+              options={[
+                { value: "Pending", label: "Pending" },
+                { value: "Completed", label: "Completed" },
+              ]}
+            />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" loading={updateLoading}>
             Save
           </Button>
         </Form>

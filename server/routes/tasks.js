@@ -54,4 +54,50 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 })
 
+router.put('/:id', authenticateToken, async (req, res) => {
+    try {
+        const taskId = Number(req.params.id)
+        const { title, description, due_date, status } = req.body
+
+        if (!Number.isInteger(taskId) || !title?.trim() || !due_date) {
+            return res.status(400).json({ message: 'Task data is invalid' })
+        }
+
+        if (!['Pending', 'Completed'].includes(status)) {
+            return res.status(400).json({ message: 'Status is invalid' })
+        }
+
+        await poolConnect
+
+        const result = await pool.request()
+            .input('id', sql.Int, taskId)
+            .input('userId', sql.Int, req.user.id)
+            .input('title', sql.NVarChar(100), title.trim())
+            .input('description', sql.NVarChar(500), description?.trim() || null)
+            .input('dueDate', sql.Date, due_date)
+            .input('status', sql.NVarChar(20), status)
+            .query(`
+                UPDATE dbo.tasks
+                SET title = @title,
+                    description = @description,
+                    due_date = @dueDate,
+                    status = @status,
+                    updated_at = GETDATE()
+                OUTPUT INSERTED.id, INSERTED.title, INSERTED.description,
+                       INSERTED.due_date, INSERTED.status,
+                       INSERTED.created_at, INSERTED.updated_at
+                WHERE id = @id AND user_id = @userId
+            `)
+
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: 'Task not found' })
+        }
+
+        res.json(result.recordset[0])
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ message: 'Failed to update task' })
+    }
+})
+
 export default router
