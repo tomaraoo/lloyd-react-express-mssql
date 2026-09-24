@@ -21,14 +21,16 @@ RUN THE APPLICATION
 - Server: cd server
 - Run: pnpm dev
 - Client: cd client
-- Run: pnpm dev -Open http://localhost:5173.
+- Run: pnpm dev
+- Open http://localhost:5173.
 
 TEST
 
 - Register a user.
 - Log in.
 - Create a task.
-- Edit the task. -Delete the task.
+- Edit the task.
+- Delete the task.
 - Open Reports and test the filters and Print button.
 
 CLIENT CHECKS
