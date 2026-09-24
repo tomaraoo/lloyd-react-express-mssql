@@ -1,17 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button, Form, Input, Modal, Popconfirm, Select, Space, Table, message } from "antd";
 import type { TableProps } from "antd";
 import { useAuth } from "../context/AuthContext";
-
-type Task = {
-  id: number;
-  title: string;
-  description: string | null;
-  due_date: string;
-  status: "Pending" | "Completed";
-  created_at: string;
-  updated_at: string;
-};
+import type { Task } from "../types";
 
 type CreateTaskValues = {
   title: string;
@@ -56,6 +48,7 @@ export function HomePage() {
   const [updateForm] = Form.useForm<UpdateTaskValues>();
   const [messageApi, contextHolder] = message.useMessage();
   const { token, username, logout } = useAuth();
+  const navigate = useNavigate();
   const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
   useEffect(() => {
@@ -211,6 +204,7 @@ export function HomePage() {
           <p>User: {username}</p>
         </div>
         <div className="page-actions">
+          <Button onClick={() => navigate("/reports")}>Reports</Button>
           <Button type="primary" onClick={() => setCreateOpen(true)}>
             Add task
           </Button>

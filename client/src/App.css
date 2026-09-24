@@ -37,3 +37,24 @@ body {
   display: flex;
   gap: 8px;
 }
+
+.report-filters {
+  margin-bottom: 24px;
+}
+
+.report-summary {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+@media print {
+  .no-print {
+    display: none;
+  }
+
+  .home-page {
+    padding: 0;
+  }
+}

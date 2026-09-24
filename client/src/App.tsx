@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import type { ReactNode } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { HomePage } from "./pages/HomePage";
+import { ReportsPage } from "./pages/ReportsPage";
 import { LoginPage } from "./pages/auth/LoginPage";
 import { RegisterPage } from "./pages/auth/RegisterPage";
 
@@ -22,6 +23,14 @@ function App() {
             element={
               <ProtectedPage>
                 <HomePage />
+              </ProtectedPage>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedPage>
+                <ReportsPage />
               </ProtectedPage>
             }
           />
