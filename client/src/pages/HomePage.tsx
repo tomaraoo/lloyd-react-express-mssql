@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, Form, Input, Modal, Select, Table, message } from "antd";
+import { Button, Form, Input, Modal, Popconfirm, Select, Space, Table, message } from "antd";
 import type { TableProps } from "antd";
 import { useAuth } from "../context/AuthContext";
 
@@ -51,6 +51,7 @@ export function HomePage() {
   const [createLoading, setCreateLoading] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [deletingTaskId, setDeletingTaskId] = useState<number | null>(null);
   const [createForm] = Form.useForm<CreateTaskValues>();
   const [updateForm] = Form.useForm<UpdateTaskValues>();
   const [messageApi, contextHolder] = message.useMessage();
@@ -155,12 +156,49 @@ export function HomePage() {
     }
   }
 
+  async function deleteTask(taskId: number) {
+    setDeletingTaskId(taskId);
+
+    try {
+      const response = await fetch(`${apiUrl}/tasks/${taskId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to delete task");
+      }
+
+      setTasks((current) => current.filter((task) => task.id !== taskId));
+      messageApi.success("Task deleted");
+    } catch (error) {
+      messageApi.error(error instanceof Error ? error.message : "Failed to delete task");
+    } finally {
+      setDeletingTaskId(null);
+    }
+  }
+
   const columns: TableProps<Task>["columns"] = [
     ...taskColumns,
     {
       title: "Actions",
       key: "actions",
-      render: (_, task) => <Button onClick={() => openUpdate(task)}>Edit</Button>,
+      render: (_, task) => (
+        <Space>
+          <Button onClick={() => openUpdate(task)}>Edit</Button>
+          <Popconfirm
+            title="Delete task?"
+            onConfirm={() => deleteTask(task.id)}
+            okText="Delete"
+            cancelText="Cancel"
+          >
+            <Button danger loading={deletingTaskId === task.id}>
+              Delete
+            </Button>
+          </Popconfirm>
+        </Space>
+      ),
     },
   ];
 

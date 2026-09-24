@@ -100,4 +100,34 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 })
 
+router.delete('/:id', authenticateToken, async (req, res) => {
+    try {
+        const taskId = Number(req.params.id)
+
+        if (!Number.isInteger(taskId)) {
+            return res.status(400).json({ message: 'Task ID is invalid' })
+        }
+
+        await poolConnect
+
+        const result = await pool.request()
+            .input('id', sql.Int, taskId)
+            .input('userId', sql.Int, req.user.id)
+            .query(`
+                DELETE FROM dbo.tasks
+                OUTPUT DELETED.id
+                WHERE id = @id AND user_id = @userId
+            `)
+
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: 'Task not found' })
+        }
+
+        res.json({ message: 'Task deleted' })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ message: 'Failed to delete task' })
+    }
+})
+
 export default router
