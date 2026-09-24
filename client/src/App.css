@@ -32,3 +32,8 @@ body {
   justify-content: space-between;
   margin-bottom: 24px;
 }
+
+.page-actions {
+  display: flex;
+  gap: 8px;
+}
